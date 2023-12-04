@@ -19,12 +19,13 @@ int main(int argc, char *argv[]) {
     FILE *fp;
     int recv_cnt;
 
+    fp = fopen("receive.dat", "wb");
 
     if(argc !=3 ) {
         printf("Usage : %s <IP> <PORT>", argv[0]);
     }
 
-    fp = fopen("receive.dat", "wb");
+    
     sock = socket(PF_INET, SOCK_DGRAM, 0);
 
     memset(&serv_addr, 0, sizeof(serv_addr)); //연결할 서버주소 초기화
@@ -52,6 +53,7 @@ int main(int argc, char *argv[]) {
         
         if(strcmp(buf, "END_OF_FILE") == 0) { //파일 전송 완료 문자를 받았다면 잘 받았다는 ACK를 서버에게 전송
             sendto(sock, "THANK_YOU_SERVER", strlen("THANK_YOU_SERVER"),0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+            fputs("received end \n", stdout);
             break;
         }
 

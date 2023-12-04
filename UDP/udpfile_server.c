@@ -21,6 +21,13 @@ int main(int argc, char *argv[]) {
     int recv_cnt;
 
     fp = fopen("udpfile_server.c", "rb");
+
+    if(!fp) { //파일 열기 실패시 에러처리
+        perror("File open error");
+        close(sock);
+        return 1;
+    }
+
     if (argc != 2)
     {
         printf("Usage : %s <PORT>", argv[0]);
@@ -35,19 +42,28 @@ int main(int argc, char *argv[]) {
     serv_addr.sin_port = htons(atoi(argv[1]));
 
     if(bind(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr))==-1) {
-        error_handling("bind() error");
+        error_handling("bind() error"); 
     }
 
+    clnt_addr_sz = sizeof(clnt_addr);
+    while(1){
+        int received_byte;
     //클라이언트로 부터 시작 메세지를 받음
-    recvfrom(sock, buf, BUF_SIZE, 0, (struct sockaddr *)&clnt_addr, &clnt_addr_sz); //주소 크기값을 주소값으로 받는 이유는 발송자의 주소크기는 변할 수 있기 떄문
-    //위에서 받은 메세지를 초기화 해줘야함
-    memset(buf, 0,BUF_SIZE);
+        if( received_byte=recvfrom(sock, buf, BUF_SIZE, 0, (struct sockaddr *)&clnt_addr, &clnt_addr_sz)==-1){
+            perror("receive error retry connect");
+            continue; //
+        } //주소 크기값을 주소값으로 받는 이유는 발송자의 주소크기는 변할 수 있기 떄문
+          //위에서 받은 메세지를 초기화 해줘야함
+
+        else {
+            fputs(buf, stdout);
+            fputc('\n',stdout);
+            break;
+        }
+        memset(buf, 0,BUF_SIZE);
     
-    if(!fp) { //파일 열기 실패시 에러처리
-        perror("File open error");
-        close(sock);
-        return 1;
     }
+  
 
    while ((recv_cnt = fread(buf, 1, BUF_SIZE, fp)) > 0) { //읽은 파일의 바이트 수를 저장 0보다 작다면 전송 중단
         sendto(sock, buf, recv_cnt, 0, (struct sockaddr *)&clnt_addr, sizeof(clnt_addr));// buf저장되어 있는 파일 스크립트 전송 
